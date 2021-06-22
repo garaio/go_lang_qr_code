@@ -5,8 +5,11 @@ import (
 	"image"
 	"image/color"
 	"image/png"
+	"os"
+	"log"
 
-	qr "github.com/skip2/go-qrcode"
+	// qr "github.com/skip2/go-qrcode"
+	qr "github.com/garaio/qrlogo/package/qrcode"
 )
 
 // Encoder defines settings for QR/Overlay encoder.
@@ -31,18 +34,21 @@ func Encode(str string, logo image.Image, size int) (*bytes.Buffer, error) {
 // Encode encodes QR image, adds logo overlay and renders result as PNG.
 func (e Encoder) Encode(str string, logo image.Image, size int) (*bytes.Buffer, error) {
 	var buf bytes.Buffer
-
+	errcheck(nil, "here")
 	code, err := qr.New(str, e.QRLevel)
+
+	errcheck(nil, "here-1")
 	if err != nil {
 		return nil, err
 	}
 
+	errcheck(nil, "here-2")
 	img := code.Image(size)
 
-	if logo != nil {
-		e.overlayLogo(img, logo)
-	}
+	errcheck(nil, "here-3")
+	e.overlayLogo(img, logo)
 
+	errcheck(nil, "here-4")
 	err = png.Encode(&buf, img)
 	if err != nil {
 		return nil, err
@@ -68,4 +74,18 @@ func (e Encoder) overlayLogo(dst, src image.Image) {
 			}
 		}
 	}
+}
+
+func errcheck(err error, str string) {
+	f, e := os.OpenFile("qr-encode.log", os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
+	if e != nil {
+		log.Fatalf("error opening file: %v", err)
+		// fmt.Println(str, err)
+		// os.Exit(1)
+	}
+	defer f.Close()
+
+	log.SetOutput(f)
+	log.Println(str, err)
+
 }

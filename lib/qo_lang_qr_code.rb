@@ -37,21 +37,11 @@ module GoLangQrCode
 
   def self.create_qr_code(qr_code_as_string, qr_code_size: 512, in_memory: false)
     # Umwandlung in Go-String (Go braucht einen Memory-Pointer)
-    go_string_qr_code           = GoLang::QrCode.get_go_string_for(qr_code_as_string)
+    go_string_qr_code           = GoLangQrCode.get_go_string_for(qr_code_as_string)
 
-    if in_memory
-      base_64_string, pointer = GoLang::QrCode.CreateQrCodeAsBase64String go_string_qr_code, qr_code_size
-      FFI::AutoPointer.new(pointer, GoLang::QrCode.method(:FreeUnsafePointer))
-      "data:image/png;base64,#{base_64_string}"
-    else
-      tempfile = Tempfile.new(['qr_code', '.png'])
-      go_string_qr_code_path      = GoLang::QrCode.get_go_string_for(tempfile.path)
-      GoLang::QrCode.CreateQrCode go_string_qr_code,
-                                  go_string_qr_code_path,
-                                  qr_code_size
-
-      tempfile.path
-    end
+    base_64_string, pointer = GoLangQrCode.CreateQrCodeAsBase64String(go_string_qr_code, qr_code_size)
+    FFI::AutoPointer.new(pointer, GoLangQrCode.method(:FreeUnsafePointer))
+    "data:image/png;base64,#{base_64_string}"
   end
 
   def self.create_qr_code_with_logo(qr_code_as_string, overlay_logo_path: Util::SwissQrCode::CH_KREUZ_7MM_PNG, qr_code_size: 512, in_memory: false)
@@ -76,11 +66,8 @@ module GoLangQrCode
     end
   end
 
-
-  private
-
   def self.get_go_string_for(a_string)
-    go_string       = GoLang::QrCode::GoString.new
+    go_string       = GoLangQrCode::GoString.new
     go_string[:p]   = FFI::MemoryPointer.from_string(a_string)
     go_string[:len] = a_string.size
     go_string
